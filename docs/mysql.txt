@@ -1,0 +1,16 @@
+首先：学生表，教师表，课程表；
+学生表包含的：
+  id，
+  name，
+  age,
+  class_id,
+ 教师表包含的：
+  id:
+  name,
+  department,
+  position
+课程表：
+  id：
+  name：
+  teacher_id,
+  number:

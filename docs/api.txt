@@ -1,0 +1,83 @@
+后端接口文档
+1. 学生功能接口
+查看/修改个人信息
+
+URL: /api/student/info
+方法: GET
+返回示例:
+{
+  "student_id": "123",
+  "name": "张三",
+  "major": "计算机科学",
+  "age": 20
+}
+查看课程信息
+
+URL: /api/student/courses
+方法: GET
+返回示例:
+[
+  {
+    "course_name": "Python程序设计",
+    "teacher": "张老师",
+    "time": "周二 10:00",
+    "location": "H401"
+  }
+]
+选课
+
+URL: /api/student/select
+方法: POST
+请求体:
+{
+  "course_id": "001"
+}
+返回示例:
+{
+  "message": "选课成功"
+}
+查看教师信息
+
+URL: /api/student/teachers
+方法: GET
+返回示例:
+[
+  {
+    "teacher_name": "张老师",
+    "department": "计算机科学"
+  }
+]
+查看自己选课信息
+
+URL: /api/student/selected-courses
+方法: GET
+返回示例:
+[
+  {
+    "course_name": "Python程序设计",
+    "status": "已选"
+  }
+]
+2. 教师功能接口
+查看/修改个人信息
+
+URL: /api/teacher/info
+方法: GET
+返回示例:
+{
+  "teacher_id": "001",
+  "name": "张老师",
+  "position": "教授",
+  "department": "计算机科学"
+}
+查看选课信息
+
+URL: /api/teacher/course-enrollment
+方法: GET
+返回示例:
+[
+  {
+    "course_name": "Python程序设计",
+    "enrolled_students": 45
+  }
+]

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生与教师管理系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header>
+            <h1>学生与教师管理系统</h1>
+        </el-header>
+        <el-container>
+            <el-aside width="200px">
+                <el-menu @select="switchRole">
+                    <el-menu-item index="student">学生功能</el-menu-item>
+                    <el-menu-item index="teacher">教师功能</el-menu-item>
+                </el-menu>
+            </el-aside>
+            <el-main>
+                <el-card>
+                    <template v-if="role === 'student'">
+                        <h2>学生功能</h2>
+                        <el-button type="primary" @click="fetchPersonalInfo">查看/修改个人信息</el-button>
+                        <el-button type="success" @click="fetchCourses">查看课程信息</el-button>
+                        <el-button type="warning" @click="selectCourse">选课</el-button>
+                        <el-button type="info" @click="fetchTeacherInfo">查看教师信息</el-button>
+                        <el-button type="danger" @click="fetchSelectedCourses">查看自己选课信息</el-button>
+                    </template>
+                    <template v-else-if="role === 'teacher'">
+                        <h2>教师功能</h2>
+                        <el-button type="primary" @click="fetchPersonalInfo">查看/修改个人信息</el-button>
+                        <el-button type="success" @click="fetchEnrolledStudents">查看选课信息</el-button>
+                    </template>
+                </el-card>
+
+                <!-- 动态表格 -->
+                <el-table v-if="data.length" :data="data" border class="mt-3">
+                    <el-table-column
+                            v-for="(col, index) in columns"
+                            :key="index"
+                            :prop="col.prop"
+                            :label="col.label"
+                            align="center"
+                    />
+                </el-table>
+            </el-main>
+        </el-container>
+    </el-container>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    // 配置 Axios 的默认 baseURL
+    axios.defaults.baseURL = 'http://localhost:8080';
+
+    // 添加 Axios 响应拦截器
+    axios.interceptors.response.use(
+        response => {
+            const res = response.data;
+
+            // 判断后端返回的 code
+            if (res.code === 1) {
+                // 成功返回 data
+                return res.data;
+            } else {
+                // 抛出错误信息
+                return Promise.reject(new Error(res.msg || 'Error'));
+            }
+        },
+        error => {
+            // 网络错误或其他问题
+            console.error('Response Error:', error);
+            return Promise.reject(error);
+        }
+    );
+
+    createApp({
+        data() {
+            return {
+                role: 'student', // 当前身份：学生或教师
+                data: [], // 动态表格数据
+                columns: [], // 表格列定义
+            };
+        },
+        methods: {
+            switchRole(role) {
+                this.role = role;
+                this.data = [];
+                this.columns = [];
+            },
+
+            async fetchPersonalInfo() {
+                try {
+                    const data = await axios.get(`/api/${this.role}/info`);
+                    this.data = [data];
+                    this.columns = Object.keys(data).map(key => ({ prop: key, label: this.formatLabel(key) }));
+                } catch (error) {
+                    alert(error.message); // 显示后端返回的错误信息
+                }
+            },
+            async fetchCourses() {
+                try {
+                    const data = await axios.get('/api/student/courses');
+                    this.data = data;
+                    this.columns = [
+                        { prop: 'course_name', label: '课程名称' },
+                        { prop: 'teacher', label: '授课教师' },
+                        { prop: 'time', label: '时间' },
+                        { prop: 'location', label: '地点' },
+                    ];
+                } catch (error) {
+                    alert(error.message);
+                }
+            },
+            async selectCourse() {
+                const courseId = prompt('请输入课程 ID:');
+                if (!courseId) return;
+                try {
+                    const message = await axios.post('/api/student/select', { course_id: courseId });
+                    alert(message); // 后端返回的成功消息
+                } catch (error) {
+                    alert(error.message); // 显示后端返回的错误信息
+                }
+            },
+            async fetchTeacherInfo() {
+                try {
+                    const data = await axios.get('/api/student/teachers');
+                    this.data = data;
+                    this.columns = [
+                        { prop: 'teacher_name', label: '教师名称' },
+                        { prop: 'department', label: '院系' },
+                    ];
+                } catch (error) {
+                    alert(error.message);
+                }
+            },
+            async fetchSelectedCourses() {
+                try {
+                    const data = await axios.get('/api/student/selected-courses');
+                    this.data = data;
+                    this.columns = [
+                        { prop: 'course_name', label: '课程名称' },
+                        { prop: 'status', label: '选课状态' },
+                    ];
+                } catch (error) {
+                    alert(error.message);
+                }
+            },
+            async fetchEnrolledStudents() {
+                try {
+                    const data = await axios.get('/api/teacher/course-enrollment');
+                    this.data = data;
+                    this.columns = [
+                        { prop: 'course_name', label: '课程名称' },
+                        { prop: 'enrolled_students', label: '选课人数' },
+                    ];
+                } catch (error) {
+                    alert(error.message);
+                }
+            },
+            formatLabel(key) {
+                return key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toUpperCase();
+            },
+        },
+    }).use(ElementPlus).mount('#app');
+</script>
+</body>
+</html>
